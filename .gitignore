@@ -1,0 +1,31 @@
+# Gradle and build output
+.gradle/
+build/
+out/
+bin/
+classes/
+
+# Dev game folder (settings, logs, worlds)
+run/
+logs/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Never commit API keys or local key files
+keys.json
+keys-local.json
+.keys-local.secret
+*.secret
+.env
