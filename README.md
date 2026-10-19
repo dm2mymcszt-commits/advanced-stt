@@ -9,8 +9,8 @@ the server only ever receives the finished chat message, the same as if you had 
 
 You bring your own API key for one of two speech-to-text services:
 
+- **AssemblyAI Universal-3.6 Pro** (streaming), the default
 - **Cartesia Ink-2**
-- **AssemblyAI Universal-3.6 Pro** (streaming)
 
 The mod has no server of its own. Your key and your voice go straight from your computer to the
 service you picked, and nowhere else.
@@ -53,9 +53,9 @@ service you picked, and nowhere else.
 
 ## Get an API key
 
-- **Cartesia**: create a key at <https://play.cartesia.ai/keys>.
 - **AssemblyAI**: open the dashboard at <https://www.assemblyai.com/dashboard> and go to
   API Keys.
+- **Cartesia**: create a key at <https://play.cartesia.ai/keys>.
 
 Then, in game: type `/astt`, choose the service, paste the key, click **Save key**, then
 **Test key**.
@@ -95,8 +95,11 @@ dashboard, the gauge counts down from it. Your real balance is always on the das
 
 ## Languages
 
-French and English are detected automatically by both services. There is no language setting.
-AssemblyAI also handles French and English mixed in the same sentence.
+There is no language setting: both services work out the language on their own.
+
+- **AssemblyAI** (the default) recognizes French and English, even mixed in the same sentence.
+- **Cartesia Ink-2** lists English, French, Spanish, Hindi and Japanese. Switching language in the
+  middle of a sentence isn't documented.
 
 ## Privacy and security
 
@@ -130,7 +133,7 @@ settings.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| Service | Cartesia Ink-2 | Which service transcribes your voice |
+| Service | AssemblyAI Universal-3.6 Pro | Which service transcribes your voice |
 | Talk key | Hold | Hold to talk, or press on/off |
 | Mic indicator | Sound + HUD | Beep and/or on-screen label when the microphone turns on and off |
 | Mic turns off after | 2 min | Safety limit for one dictation (15 s to 10 min) |

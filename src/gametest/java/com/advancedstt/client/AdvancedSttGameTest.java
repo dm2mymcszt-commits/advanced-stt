@@ -95,9 +95,15 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 	// ---- Settings screen ----
 
 	private void settingsScreenSavesAKey(ClientGameTestContext context) {
+		setConfig(context, config -> config.provider = Provider.ASSEMBLYAI); // the default on a first launch
 		context.setScreen(() -> new SettingsScreen(null));
 		context.waitTicks(2);
 		context.takeScreenshot("settings-no-key");
+
+		// The rest of the test uses Cartesia, picked with the Service button.
+		pressSetting(context, "advanced_stt.settings.provider");
+		check(context.computeOnClient(mc -> AdvancedStt.get().config().get().provider) == Provider.CARTESIA,
+				"the Service button switches to Cartesia");
 
 		click(context, editBox("advanced_stt.settings.key"));
 		context.getInput().typeChars(FAKE_KEY);
@@ -461,6 +467,18 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 	private static Predicate<GuiEventListener> editBox(String titleKey) {
 		return w -> w instanceof EditBox box
 				&& box.getMessage().getString().equals(Component.translatable(titleKey).getString());
+	}
+
+	/** Presses a setting button such as "Service: Cartesia Ink-2" once, which moves it to its next value. */
+	private static void pressSetting(ClientGameTestContext context, String captionKey) {
+		context.runOnClient(mc -> {
+			String caption = Component.translatable(captionKey).getString() + ": ";
+			AbstractButton button = (AbstractButton) find(mc.gui.screen(),
+					w -> w instanceof AbstractButton b && b.getMessage().getString().startsWith(caption))
+					.orElseThrow(() -> new AssertionError("No '" + caption + "...' button on " + mc.gui.screen()));
+			button.onPress(new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_LEFT, 0));
+		});
+		context.waitTick();
 	}
 
 	/** Presses the button with this label, wherever it is in the screen's lists. */

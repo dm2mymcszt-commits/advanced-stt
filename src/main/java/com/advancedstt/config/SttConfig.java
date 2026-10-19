@@ -33,7 +33,8 @@ public final class SttConfig {
 	/** AssemblyAI's list price for Universal-3.6 Pro streaming: $0.45 per hour. */
 	public static final double DEFAULT_ASSEMBLYAI_DOLLARS_PER_HOUR = 0.45;
 
-	public Provider provider = Provider.CARTESIA;
+	/** AssemblyAI by default: it handles French and English, even mixed in one sentence. */
+	public Provider provider = Provider.ASSEMBLYAI;
 	public ActivationMode activation = ActivationMode.HOLD;
 	public SendMode sendMode = SendMode.MANUAL;
 	public double autoSendSilenceSeconds = 1.5;
@@ -51,7 +52,7 @@ public final class SttConfig {
 	/** Puts every value back in range after loading a hand-edited or older file. */
 	public SttConfig sanitize() {
 		if (provider == null) {
-			provider = Provider.CARTESIA;
+			provider = Provider.ASSEMBLYAI;
 		}
 		if (activation == null) {
 			activation = ActivationMode.HOLD;

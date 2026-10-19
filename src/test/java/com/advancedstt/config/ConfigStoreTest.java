@@ -20,7 +20,7 @@ class ConfigStoreTest {
 	@Test
 	void defaultsWhenThereIsNoFile() {
 		SttConfig config = new ConfigStore(dir.resolve("advanced-stt.json")).load();
-		assertEquals(Provider.CARTESIA, config.provider);
+		assertEquals(Provider.ASSEMBLYAI, config.provider);
 		assertEquals(SttConfig.ActivationMode.HOLD, config.activation);
 		assertEquals(SttConfig.SendMode.MANUAL, config.sendMode);
 		assertEquals(SttConfig.Indicator.SOUND_AND_VISUAL, config.indicator);
@@ -34,14 +34,14 @@ class ConfigStoreTest {
 		Path file = dir.resolve("advanced-stt.json");
 		ConfigStore store = new ConfigStore(file);
 		SttConfig config = store.load();
-		config.provider = Provider.ASSEMBLYAI;
+		config.provider = Provider.CARTESIA;
 		config.sendMode = SttConfig.SendMode.AUTO;
 		config.keyterms = new java.util.ArrayList<>(List.of("Steve", "Alex"));
 		store.save();
 		String json = Files.readString(file);
 		assertFalse(json.toLowerCase(java.util.Locale.ROOT).contains("apikey"), "keys never go in the settings file");
 		SttConfig again = new ConfigStore(file).load();
-		assertEquals(Provider.ASSEMBLYAI, again.provider);
+		assertEquals(Provider.CARTESIA, again.provider);
 		assertEquals(SttConfig.SendMode.AUTO, again.sendMode);
 		assertEquals(List.of("Steve", "Alex"), again.keyterms);
 	}
@@ -54,7 +54,7 @@ class ConfigStoreTest {
 				 "cartesiaCreditsPerSecond": -1, "keyterms": null, "microphone": null}
 				""");
 		SttConfig config = new ConfigStore(file).load();
-		assertEquals(Provider.CARTESIA, config.provider);
+		assertEquals(Provider.ASSEMBLYAI, config.provider);
 		assertEquals(SttConfig.MAX_SILENCE_SECONDS, config.autoSendSilenceSeconds);
 		assertEquals(SttConfig.MIN_SESSION_SECONDS, config.maxSessionSeconds);
 		assertEquals(SttConfig.DEFAULT_CARTESIA_CREDITS_PER_SECOND, config.cartesiaCreditsPerSecond);
@@ -67,7 +67,7 @@ class ConfigStoreTest {
 		Path file = dir.resolve("advanced-stt.json");
 		Files.writeString(file, "this is not json {");
 		SttConfig config = new ConfigStore(file).load();
-		assertEquals(Provider.CARTESIA, config.provider);
+		assertEquals(Provider.ASSEMBLYAI, config.provider);
 		assertTrue(Files.exists(dir.resolve("advanced-stt.json.bad")));
 	}
 
