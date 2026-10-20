@@ -98,8 +98,8 @@ dashboard, the gauge counts down from it. Your real balance is always on the das
 There is no language setting: both services work out the language on their own.
 
 - **AssemblyAI** (the default) recognizes French and English, even mixed in the same sentence.
-- **Cartesia Ink-2** lists English, French, Spanish, Hindi and Japanese. Switching language in the
-  middle of a sentence isn't documented.
+- **Cartesia Ink-2** works well in English. Cartesia lists French too, but in our tests French was
+  weak and sentences mixing French and English failed, so use AssemblyAI for French.
 
 ## Privacy and security
 

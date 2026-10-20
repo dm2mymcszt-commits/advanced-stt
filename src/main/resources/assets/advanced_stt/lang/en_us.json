@@ -99,5 +99,6 @@
 	"advanced_stt.unit.credits": "%s credits",
 
 	"advanced_stt.settings.section.language": "Languages",
-	"advanced_stt.settings.language.auto": "French and English are detected automatically."
+	"advanced_stt.settings.language.assemblyai": "Detects French and English, even mixed.",
+	"advanced_stt.settings.language.cartesia": "Best in English. For French, use AssemblyAI."
 }

@@ -54,6 +54,7 @@ public final class SettingsScreen extends OptionsSubScreen {
 	private UsageGauge gauge;
 	private InfoLine usageLine;
 	private InfoLine usageNote;
+	private InfoLine languageInfo;
 	private EditBox balanceBox;
 	private Button clearBalanceButton;
 	private boolean keytermsEdited;
@@ -75,7 +76,8 @@ public final class SettingsScreen extends OptionsSubScreen {
 		addWordRows();
 		addUsageRows();
 		list.addHeader(Component.translatable("advanced_stt.settings.section.language"));
-		list.addBig(new InfoLine(Component.translatable("advanced_stt.settings.language.auto"), MUTED));
+		languageInfo = new InfoLine(Component.empty(), MUTED);
+		list.addBig(languageInfo);
 		refresh();
 	}
 
@@ -371,6 +373,10 @@ public final class SettingsScreen extends OptionsSubScreen {
 				: Component.translatable("advanced_stt.settings.usage.note.assemblyai",
 						local(UsageFormat.plain(config.assemblyAiDollarsPerHour))), MUTED);
 		usageNote.setTooltip(Tooltip.create(Component.translatable("advanced_stt.settings.usage.note.tooltip")));
+
+		// Ink-2 was tested by the owner: fine in English, weak in French, and mixed sentences fail.
+		languageInfo.set(Component.translatable("advanced_stt.settings.language." + provider.id()),
+				provider == Provider.CARTESIA ? WARN : MUTED);
 	}
 
 	private void setAction(Component message, int color) {
