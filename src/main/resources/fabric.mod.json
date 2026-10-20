@@ -10,6 +10,7 @@
 		"issues": "https://github.com/dm2mymcszt-commits/advanced-stt/issues"
 	},
 	"license": "MIT",
+	"icon": "assets/advanced_stt/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"client": ["com.advancedstt.AdvancedSttClient"],
