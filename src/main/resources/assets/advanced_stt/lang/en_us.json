@@ -6,6 +6,8 @@
 	"advanced_stt.hud.connecting": "Connecting…",
 	"advanced_stt.hud.listening": "Listening %s",
 	"advanced_stt.hud.finishing": "Finishing…",
+	"advanced_stt.hud.send_in": "Sending in %s s · Esc to cancel",
+	"advanced_stt.hud.esc_cancels": "Esc to cancel",
 
 	"advanced_stt.notice.no_key": "No %s API key yet. Type /astt to add one.",
 	"advanced_stt.notice.start_failed": "Could not connect to %s: %s",
@@ -16,6 +18,7 @@
 	"advanced_stt.notice.not_sent.too_long": "Too long for one chat message (%s of %s characters). Shorten it, then press Enter.",
 	"advanced_stt.notice.not_sent.repeat": "Same as your last message, so it was not sent again. Press Enter to send it.",
 	"advanced_stt.notice.not_sent.restricted": "Chat messages can't be sent right now. See the chat box.",
+	"advanced_stt.notice.cancelled": "Message cancelled. Nothing was sent.",
 
 	"advanced_stt.error.invalid_key": "%s refused the API key. Check it with /astt.",
 	"advanced_stt.error.no_credits": "%s says your account has no credits left.",
@@ -88,9 +91,9 @@
 	"advanced_stt.settings.send.manual": "With Enter",
 	"advanced_stt.settings.send.auto": "Automatically",
 	"advanced_stt.settings.send.manual.info": "Your words go in the chat box. Press Enter to send.",
-	"advanced_stt.settings.send.auto.info": "Sent when you stop talking. Never commands.",
+	"advanced_stt.settings.send.auto.info": "Sent after a short silence. Esc cancels. Never commands.",
 	"advanced_stt.settings.silence": "Silence: %s s",
-	"advanced_stt.settings.silence.tooltip": "How long to wait after you stop talking before the message is sent.",
+	"advanced_stt.settings.silence.tooltip": "How long to wait after you stop talking, or let go of the talk key, before the message is sent. Until then, Esc cancels it, and opening the chat lets you check it and send it with Enter.",
 
 	"advanced_stt.settings.section.words": "Words to listen for",
 	"advanced_stt.settings.words": "Words to listen for",
@@ -117,5 +120,5 @@
 
 	"advanced_stt.settings.section.language": "Languages",
 	"advanced_stt.settings.language.assemblyai": "Detects French and English, even mixed.",
-	"advanced_stt.settings.language.cartesia": "English only. Will probably be removed: use AssemblyAI."
+	"advanced_stt.settings.language.cartesia": "French and English. Will probably be removed."
 }

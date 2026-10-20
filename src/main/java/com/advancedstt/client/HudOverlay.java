@@ -8,6 +8,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -27,6 +28,7 @@ final class HudOverlay implements HudElement {
 	private static final int ERROR = 0xFFFF5555;
 	private static final int INFO = 0xFFFFFF55;
 	private static final int PREVIEW_TEXT = 0xFFE0E0E0;
+	private static final int COUNTDOWN = 0xFF64B5F6;
 	private static final int LEVEL_WIDTH = 24;
 	private static final int NOTICE_WIDTH = 300;
 
@@ -52,6 +54,9 @@ final class HudOverlay implements HudElement {
 			drawNotice(graphics, mc.font, dictation, y);
 			if (mc.gui.screen() == null) {
 				drawLiveText(graphics, mc, dictation);
+			}
+			if (mc.gui.screen() == null || mc.gui.screen() instanceof ChatScreen) {
+				drawAutoSend(graphics, mc, dictation);
 			}
 		} catch (RuntimeException e) {
 			// Drawing must never break the game's HUD.
@@ -127,5 +132,36 @@ final class HudOverlay implements HudElement {
 		if (!counter.isEmpty()) {
 			g.text(font, counter, width - 4 - font.width(counter), top + 2, ERROR, false);
 		}
+	}
+
+	/**
+	 * With automatic sending, above the words (or the chat box): how long before the message is sent,
+	 * a bar that empties until then, and that Esc cancels it.
+	 */
+	private static void drawAutoSend(GuiGraphicsExtractor g, Minecraft mc, DictationController dictation) {
+		long left = dictation.autoSendInMs();
+		if (left < 0) {
+			return;
+		}
+		Font font = mc.font;
+		int width = g.guiWidth();
+		int top = g.guiHeight() - 14; // where the words, or the chat box, are
+		Component label;
+		if (left == Long.MAX_VALUE) {
+			label = Component.translatable("advanced_stt.hud.esc_cancels");
+		} else {
+			double seconds = Math.ceil(left / 100.0) / 10.0;
+			String number = UsageFormat.localize(String.format(java.util.Locale.ROOT, "%.1f", seconds),
+					mc.options.languageCode);
+			label = Component.translatable("advanced_stt.hud.send_in", number);
+			long delay = Math.max(1, dictation.autoSendDelayMs());
+			int bar = (int) Math.round((width - 4) * Math.clamp((double) left / delay, 0.0, 1.0));
+			g.fill(2, top - 1, 2 + bar, top, COUNTDOWN);
+		}
+		int labelWidth = font.width(label);
+		int x = width - 4 - labelWidth;
+		int y = top - 13;
+		g.fill(x - 2, y - 2, x + labelWidth + 2, y + 10, PANEL);
+		g.text(font, label, x, y, WHITE, true);
 	}
 }

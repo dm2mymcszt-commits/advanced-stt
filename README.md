@@ -10,7 +10,7 @@ the server only ever receives the finished chat message, the same as if you had 
 You bring your own API key for one of two speech-to-text services:
 
 - **AssemblyAI Universal-3.6 Pro** (streaming), the default
-- **Cartesia Ink-2** (English only, and will probably be removed in a future version)
+- **Cartesia Ink-2** (will probably be removed in a future version)
 
 The mod has no server of its own. Your key and your voice go straight from your computer to the
 service you picked, and nowhere else.
@@ -22,9 +22,10 @@ service you picked, and nowhere else.
   message is finished.
 - **Manual sending** (default): your words go into the chat box, you check them and press Enter.
   Works while the chat box is open too: dictated words are added after what you typed.
-- **Automatic sending** (optional): the message is sent once you stop talking. Commands are never
-  sent automatically, the same message is never sent twice in a row, and messages are never sent
-  faster than one every 2 seconds.
+- **Automatic sending** (optional): the message is sent after a short silence, with a countdown on
+  screen. Press **Esc** during the countdown to cancel it, or open the chat to check it and send it
+  yourself. Commands are never sent automatically, the same message is never sent twice in a row,
+  and messages are never sent faster than one every 2 seconds.
 - **Microphone indicator**: a short sound and a small "Listening" label with a level meter.
 - **Words to listen for**: player names and game words the service should spell right.
 - **Usage panel**: what the mod measured, priced at each service's published rate, with an
@@ -67,6 +68,13 @@ Then, in game: type `/astt`, choose the service, paste the key, click **Save key
 2. Let go. The chat box opens with your text. Fix anything you like, then press **Enter**, or
    **Esc** to throw it away.
 
+With automatic sending on, the chat box doesn't open: the message is sent once you have been
+quiet for the time you chose (1.5 s by default). After you let go of the key, the wait starts when
+your last words arrive, and a countdown shows above them. Until it ends:
+
+- press **Esc** to cancel the message (the pause menu opens on the next Esc), or
+- open the chat (**T**) to check the message, then send it yourself with **Enter**.
+
 You can change the key in Options > Controls > Key Binds > Advanced STT, or from the settings
 screen. Pick a key that doesn't type a letter, so it also works while the chat box is open.
 
@@ -98,8 +106,8 @@ dashboard, the gauge counts down from it. Your real balance is always on the das
 There is no language setting: both services work out the language on their own.
 
 - **AssemblyAI** (the default) recognizes French and English, even mixed in the same sentence.
-- **Cartesia Ink-2** works well in English. Cartesia lists French too, but in our tests French was
-  weak and sentences mixing French and English failed, so use AssemblyAI for French.
+- **Cartesia Ink-2** works in English and in French. In our tests it failed on sentences that mix
+  French and English, so use AssemblyAI if you mix both.
 
 > **Cartesia Ink-2 will probably be removed** in a future version, because AssemblyAI does better
 > in our tests. If you use Ink-2 today, we recommend switching to AssemblyAI.
@@ -142,7 +150,7 @@ settings.
 | Talk key | Hold | Hold to talk, or press on/off |
 | Mic indicator | Sound + HUD | Beep and/or on-screen label when the microphone turns on and off |
 | Mic turns off after | 2 min | Safety limit for one dictation (15 s to 10 min) |
-| Send | With Enter | Or automatically after a silence (0.5 to 5 s, default 1.5 s) |
+| Send | With Enter | Or automatically after a silence (0.5 to 5 s, default 1.5 s). Esc cancels during the countdown |
 | Words to listen for | (empty) | Names and game words, separated by commas (up to 100) |
 | Microphone | System default | Which input device to use |
 

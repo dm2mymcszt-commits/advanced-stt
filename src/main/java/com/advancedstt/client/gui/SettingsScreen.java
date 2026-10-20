@@ -402,7 +402,7 @@ public final class SettingsScreen extends OptionsSubScreen {
 						local(UsageFormat.plain(config.assemblyAiRate()))), MUTED);
 		usageNote.setTooltip(Tooltip.create(Component.translatable("advanced_stt.settings.usage.note.tooltip")));
 
-		// Ink-2 was tested by the owner: fine in English, weak in French, and mixed sentences fail.
+		// Ink-2 will probably be removed, so its line is shown as a warning.
 		languageInfo.set(Component.translatable("advanced_stt.settings.language." + provider.id()),
 				provider == Provider.CARTESIA ? WARN : MUTED);
 
