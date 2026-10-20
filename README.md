@@ -10,7 +10,7 @@ the server only ever receives the finished chat message, the same as if you had 
 You bring your own API key for one of two speech-to-text services:
 
 - **AssemblyAI Universal-3.6 Pro** (streaming), the default
-- **Cartesia Ink-2**
+- **Cartesia Ink-2** (English only, and will probably be removed in a future version)
 
 The mod has no server of its own. Your key and your voice go straight from your computer to the
 service you picked, and nowhere else.
@@ -100,6 +100,9 @@ There is no language setting: both services work out the language on their own.
 - **AssemblyAI** (the default) recognizes French and English, even mixed in the same sentence.
 - **Cartesia Ink-2** works well in English. Cartesia lists French too, but in our tests French was
   weak and sentences mixing French and English failed, so use AssemblyAI for French.
+
+> **Cartesia Ink-2 will probably be removed** in a future version, because AssemblyAI does better
+> in our tests. If you use Ink-2 today, we recommend switching to AssemblyAI.
 
 ## Privacy and security
 
