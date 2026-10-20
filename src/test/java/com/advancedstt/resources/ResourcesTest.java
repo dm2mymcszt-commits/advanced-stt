@@ -84,6 +84,7 @@ class ResourcesTest {
 		JsonObject mod = json(RESOURCES.resolve("fabric.mod.json"));
 		assertEquals("advanced_stt", mod.get("id").getAsString());
 		assertEquals("client", mod.get("environment").getAsString());
+		assertTrue(Files.exists(RESOURCES.resolve(mod.get("icon").getAsString())), "icon");
 		JsonObject entrypoints = mod.getAsJsonObject("entrypoints");
 		for (String group : List.of("client", "modmenu")) {
 			String className = entrypoints.getAsJsonArray(group).get(0).getAsString();
@@ -103,7 +104,8 @@ class ResourcesTest {
 		Pattern secret = Pattern.compile("(sk_car_|sk-|Bearer [A-Za-z0-9])");
 		try (Stream<Path> files = Files.walk(RESOURCES)) {
 			for (Path file : files.filter(Files::isRegularFile).toList()) {
-				String text = Files.readString(file, StandardCharsets.UTF_8);
+				// Latin-1 reads any byte, so binary files such as the icon are scanned too.
+				String text = new String(Files.readAllBytes(file), StandardCharsets.ISO_8859_1);
 				assertTrue(!secret.matcher(text).find(), "possible secret in " + file);
 			}
 		}

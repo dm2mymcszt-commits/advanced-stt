@@ -100,5 +100,5 @@
 
 	"advanced_stt.settings.section.language": "Langues",
 	"advanced_stt.settings.language.assemblyai": "Détecte le français et l'anglais, même mélangés.",
-	"advanced_stt.settings.language.cartesia": "Anglais surtout. En français, prenez AssemblyAI."
+	"advanced_stt.settings.language.cartesia": "Anglais seul, sera sûrement retiré. Prenez AssemblyAI."
 }
