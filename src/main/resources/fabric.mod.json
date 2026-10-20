@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "advanced_stt",
+	"version": "${version}",
+	"name": "Advanced STT",
+	"description": "Dictate your chat messages with your voice, using your own Cartesia Ink-2 or AssemblyAI Universal-3.6 Pro API key. Client-side only.",
+	"authors": ["testoraa"],
+	"contact": {
+		"sources": "https://github.com/dm2mymcszt-commits/advanced-stt",
+		"issues": "https://github.com/dm2mymcszt-commits/advanced-stt/issues"
+	},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.advancedstt.AdvancedSttClient"],
+		"modmenu": ["com.advancedstt.client.ModMenuIntegration"]
+	},
+	"mixins": ["advanced_stt.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}

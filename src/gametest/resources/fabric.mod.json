@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"id": "advanced_stt_gametest",
+	"version": "1.0.0",
+	"name": "Advanced STT in-game tests",
+	"description": "Drives the real game with a fake microphone and a fake speech service. Development only.",
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.advancedstt.client.AdvancedSttGameTest"
+		]
+	},
+	"depends": {
+		"advanced_stt": "*",
+		"fabric-client-gametest-api-v1": "*",
+		"fabric-message-api-v1": "*"
+	}
+}
