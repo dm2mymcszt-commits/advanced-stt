@@ -65,8 +65,19 @@ class ResourcesTest {
 			used.add("advanced_stt.settings.send." + send);
 			used.add("advanced_stt.settings.send." + send + ".info");
 		}
-		for (String provider : List.of("cartesia", "assemblyai")) {
-			used.add("advanced_stt.settings.balance.hint." + provider);
+		for (com.advancedstt.Provider provider : com.advancedstt.Provider.values()) {
+			used.add("advanced_stt.settings.balance.hint." + provider.id());
+			used.add("advanced_stt.settings.language." + provider.id());
+		}
+		for (com.advancedstt.stt.SttOptions.Mode mode : com.advancedstt.stt.SttOptions.Mode.values()) {
+			String name = mode.name().toLowerCase(java.util.Locale.ROOT);
+			used.add("advanced_stt.settings.mode." + name);
+			used.add("advanced_stt.settings.mode." + name + ".tooltip");
+		}
+		for (com.advancedstt.stt.SttOptions.VoiceFocus focus : com.advancedstt.stt.SttOptions.VoiceFocus.values()) {
+			String name = focus.name().toLowerCase(java.util.Locale.ROOT);
+			used.add("advanced_stt.settings.voice_focus." + name);
+			used.add("advanced_stt.settings.voice_focus." + name + ".tooltip");
 		}
 		used.add("key.category.advanced_stt.main");
 		Set<String> missing = new TreeSet<>();

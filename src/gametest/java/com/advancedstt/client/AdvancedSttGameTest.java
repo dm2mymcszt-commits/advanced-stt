@@ -5,6 +5,7 @@ import com.advancedstt.client.gui.SettingsScreen;
 import com.advancedstt.config.SttConfig;
 import com.advancedstt.mixin.ChatScreenAccessor;
 import com.advancedstt.stt.SttError;
+import com.advancedstt.stt.SttOptions;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -63,6 +64,7 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 
 			noKeyForTheChosenService(context);
 			holdToTalkThenPressEnter(context);
+			assemblyAiSettingsReachTheConnection(context);
 			dictateAfterTypedText(context);
 			altUsedToTypeASymbol(context);
 			pressOnPressOff(context);
@@ -100,10 +102,24 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		context.waitTicks(2);
 		context.takeScreenshot("settings-no-key");
 
+		// AssemblyAI's own settings: Balanced -> Fastest -> Most accurate, and Voice Focus Off -> Headset.
+		check(settingActive(context, "advanced_stt.settings.mode"), "the Mode button works with AssemblyAI");
+		pressSetting(context, "advanced_stt.settings.mode");
+		pressSetting(context, "advanced_stt.settings.mode");
+		pressSetting(context, "advanced_stt.settings.voice_focus");
+		check(context.computeOnClient(mc -> AdvancedStt.get().config().get().sttOptions()).equals(
+				new SttOptions(List.of(), SttOptions.Mode.MAX_ACCURACY, SttOptions.VoiceFocus.NEAR_FIELD)),
+				"the Mode and Voice Focus buttons change the settings");
+		scrollDown(context, 4);
+		context.takeScreenshot("settings-assemblyai-options");
+
 		// The rest of the test uses Cartesia, picked with the Service button.
 		pressSetting(context, "advanced_stt.settings.provider");
 		check(context.computeOnClient(mc -> AdvancedStt.get().config().get().provider) == Provider.CARTESIA,
 				"the Service button switches to Cartesia");
+		check(!settingActive(context, "advanced_stt.settings.mode")
+				&& !settingActive(context, "advanced_stt.settings.voice_focus"),
+				"AssemblyAI's settings are greyed out with Cartesia");
 
 		click(context, editBox("advanced_stt.settings.key"));
 		context.getInput().typeChars(FAKE_KEY);
@@ -151,6 +167,8 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		context.setScreen(() -> new SettingsScreen(null));
 		context.waitTicks(2);
 		context.takeScreenshot("settings-french");
+		scrollDown(context, 4);
+		context.takeScreenshot("settings-french-assemblyai-greyed");
 		scrollToBottom(context);
 		context.takeScreenshot("settings-french-bottom");
 		context.setScreen(() -> null);
@@ -205,6 +223,29 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		context.waitTicks(2);
 		check(context.computeOnClient(mc -> mc.gui.screen() == null), "the chat box closes after Enter");
 		check(context.computeOnClient(mc -> dictation().pendingText().isEmpty()), "sent words are not shown again");
+	}
+
+	private void assemblyAiSettingsReachTheConnection(ClientGameTestContext context) {
+		context.runOnClient(mc -> {
+			try {
+				AdvancedStt.get().credentials().put(Provider.ASSEMBLYAI, FAKE_KEY);
+			} catch (java.io.IOException e) {
+				throw new AssertionError(e);
+			}
+		});
+		setConfig(context, config -> config.provider = Provider.ASSEMBLYAI);
+		FakeDevices.FakeSession session = startTalking(context);
+		check(session.provider == Provider.ASSEMBLYAI, "the connection goes to AssemblyAI");
+		check(session.options.mode() == SttOptions.Mode.MAX_ACCURACY
+				&& session.options.voiceFocus() == SttOptions.VoiceFocus.NEAR_FIELD,
+				"the connection gets the Mode and Voice Focus from the settings");
+		session.lastWords(0, "Assembly words.");
+		context.getInput().releaseKey(TALK_KEY);
+		waitUntil(context, "the chat box opens with the words", mc -> "Assembly words.".equals(chatValue(mc)));
+		closeChatWithoutSending(context);
+		waitUntil(context, "the microphone is off", mc -> allMicrophonesOff());
+		setConfig(context, config -> config.provider = Provider.CARTESIA);
+		context.waitTicks(2);
 	}
 
 	private void dictateAfterTypedText(ClientGameTestContext context) {
@@ -481,6 +522,17 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		context.waitTick();
 	}
 
+	/** Whether a setting button such as "Mode: Balanced" can be pressed. */
+	private static boolean settingActive(ClientGameTestContext context, String captionKey) {
+		return context.computeOnClient(mc -> {
+			String caption = Component.translatable(captionKey).getString() + ": ";
+			return find(mc.gui.screen(),
+					w -> w instanceof AbstractButton b && b.getMessage().getString().startsWith(caption))
+					.map(w -> ((AbstractButton) w).active)
+					.orElseThrow(() -> new AssertionError("No '" + caption + "...' button on " + mc.gui.screen()));
+		});
+	}
+
 	/** Presses the button with this label, wherever it is in the screen's lists. */
 	private static void press(ClientGameTestContext context, String translationKey) {
 		context.runOnClient(mc -> {
@@ -527,10 +579,14 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 	}
 
 	private static void scrollToBottom(ClientGameTestContext context) {
+		scrollDown(context, 50);
+	}
+
+	private static void scrollDown(ClientGameTestContext context, int clicks) {
 		double[] middle = context.computeOnClient(mc -> new double[]{mc.getWindow().getScreenWidth() / 2.0,
 				mc.getWindow().getScreenHeight() / 2.0});
 		context.getInput().setCursorPos(middle[0], middle[1]);
-		context.getInput().scroll(-50);
+		context.getInput().scroll(-clicks);
 		context.waitTicks(2);
 	}
 

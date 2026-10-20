@@ -65,7 +65,7 @@ public final class UsageTracker {
 	public static double cost(Provider provider, double seconds, SttConfig config) {
 		return switch (provider) {
 			case CARTESIA -> seconds * config.cartesiaCreditsPerSecond;
-			case ASSEMBLYAI -> seconds / 3600.0 * config.assemblyAiDollarsPerHour;
+			case ASSEMBLYAI -> seconds / 3600.0 * config.assemblyAiRate();
 		};
 	}
 

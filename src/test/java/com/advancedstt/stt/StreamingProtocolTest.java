@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -164,6 +165,8 @@ class StreamingProtocolTest {
 		assertEquals(List.of("16000"), query.get("sample_rate"));
 		assertEquals(List.of("pcm_s16le"), query.get("encoding"));
 		assertEquals(List.of("universal-3-6-pro"), query.get("speech_model"));
+		assertEquals(List.of("balanced"), query.get("mode"), "AssemblyAI's own default, sent explicitly");
+		assertNull(query.get("voice_focus"), "Voice Focus costs extra, so it's left off unless chosen");
 		assertEquals(JsonParser.parseString("[\"Steve\",\"Nether\"]"),
 				JsonParser.parseString(query.get("keyterms_prompt").getFirst()));
 		assertFalse(server.resource.contains(KEY));
@@ -175,6 +178,26 @@ class StreamingProtocolTest {
 		assertEquals(1, listener.closeCount.get());
 		assertEquals(1.5, listener.usage.reportedSeconds(), 1e-9);
 		assertEquals(1.5, listener.usage.billableSeconds(), 1e-9, "billed on the session length the service reports");
+	}
+
+	@Test
+	void assemblyAiSettingsGoOnTheConnection() throws Exception {
+		server = FakeSttServer.start(new FakeSttServer.Script() {
+		});
+		RecordingListener listener = new RecordingListener();
+		SttSession session = AssemblyAiSession.open(server.url("/v3/ws"), KEY,
+				new SttOptions(List.of(), SttOptions.Mode.MAX_ACCURACY, SttOptions.VoiceFocus.FAR_FIELD), listener);
+		assertTrue(listener.opened.await(10, java.util.concurrent.TimeUnit.SECONDS));
+		session.abort();
+		assertTrue(listener.awaitClosed(10));
+		Map<String, List<String>> query = query(server.resource);
+		assertEquals(List.of("max_accuracy"), query.get("mode"));
+		assertEquals(List.of("far-field"), query.get("voice_focus"));
+		assertNull(query.get("keyterms_prompt"), "no words to listen for, so none sent");
+
+		assertEquals("min_latency", SttOptions.Mode.MIN_LATENCY.apiValue());
+		assertEquals("near-field", SttOptions.VoiceFocus.NEAR_FIELD.apiValue());
+		assertNull(SttOptions.VoiceFocus.OFF.apiValue());
 	}
 
 	@Test

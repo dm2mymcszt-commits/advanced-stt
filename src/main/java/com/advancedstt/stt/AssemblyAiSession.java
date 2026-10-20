@@ -20,6 +20,10 @@ import java.util.Map;
  * {@code end_of_turn} on the final one), and {@code Termination} with the session length after we
  * send {@code Terminate}. Billed for the time the connection stays open. The model detects the
  * language itself and handles French and English in one sentence.
+ *
+ * <p>Two optional connection parameters come from the settings: {@code mode} (always sent) and
+ * {@code voice_focus} (only when turned on, as it costs extra). Values from AssemblyAI's streaming
+ * docs and SDKs.
  */
 public final class AssemblyAiSession extends WebSocketSttSession {
 	public static final String DEFAULT_ENDPOINT = "wss://streaming.assemblyai.com/v3/ws";
@@ -34,18 +38,26 @@ public final class AssemblyAiSession extends WebSocketSttSession {
 	}
 
 	public static SttSession open(String endpoint, String apiKey, List<String> keyterms, SttListener listener) {
-		AssemblyAiSession session = new AssemblyAiSession(buildUri(endpoint, keyterms), apiKey, listener);
+		return open(endpoint, apiKey, SttOptions.of(keyterms), listener);
+	}
+
+	public static SttSession open(String endpoint, String apiKey, SttOptions options, SttListener listener) {
+		AssemblyAiSession session = new AssemblyAiSession(buildUri(endpoint, options), apiKey, listener);
 		session.start();
 		return session;
 	}
 
-	static URI buildUri(String endpoint, List<String> keyterms) {
+	static URI buildUri(String endpoint, SttOptions options) {
 		StringBuilder url = new StringBuilder(endpoint)
 				.append("?sample_rate=").append(SAMPLE_RATE)
 				.append("&encoding=pcm_s16le")
-				.append("&speech_model=").append(MODEL);
+				.append("&speech_model=").append(MODEL)
+				.append("&mode=").append(options.mode().apiValue());
+		if (options.voiceFocus().apiValue() != null) {
+			url.append("&voice_focus=").append(options.voiceFocus().apiValue());
+		}
 		JsonArray terms = new JsonArray();
-		for (String term : keyterms) {
+		for (String term : options.keyterms()) {
 			if (terms.size() >= MAX_KEYTERMS) {
 				break;
 			}
