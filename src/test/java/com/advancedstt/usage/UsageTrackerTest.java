@@ -37,6 +37,18 @@ class UsageTrackerTest {
 	}
 
 	@Test
+	void voiceFocusAddsItsPriceToAssemblyAi() {
+		SttConfig config = new SttConfig();
+		config.voiceFocus = com.advancedstt.stt.SttOptions.VoiceFocus.NEAR_FIELD;
+		UsageTracker tracker = new UsageTracker(dir.resolve("usage.json"));
+		assertEquals(0.55, tracker.record(new SessionUsage(Provider.ASSEMBLYAI, 100, 3600, 3600), config), 1e-9);
+		assertEquals(30.0, tracker.record(new SessionUsage(Provider.CARTESIA, 10.0, 12.0, -1), config), 1e-9,
+				"Voice Focus is AssemblyAI's: Cartesia's price doesn't change");
+		config.assemblyAiMode = com.advancedstt.stt.SttOptions.Mode.MAX_ACCURACY;
+		assertEquals(0.55, UsageTracker.cost(Provider.ASSEMBLYAI, 3600, config), 1e-9, "the mode is free");
+	}
+
+	@Test
 	void remainingIsAnEstimateFromTheTypedBalance() {
 		SttConfig config = new SttConfig();
 		UsageTracker tracker = new UsageTracker(dir.resolve("usage.json"));

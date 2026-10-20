@@ -82,11 +82,11 @@ Each service bills your own account. The mod only opens a connection while the m
 | Service | How it bills | Example |
 | --- | --- | --- |
 | Cartesia Ink-2 | 3 credits per second of audio sent, silence included | 1 minute of talking = 180 credits |
-| AssemblyAI Universal-3.6 Pro | $0.45 per hour that the connection stays open | 1 minute ≈ $0.0075 |
+| AssemblyAI Universal-3.6 Pro | $0.45 per hour that the connection stays open, +$0.10 with Voice Focus on | 1 minute ≈ $0.0075 |
 
 These are the published rates at the time of writing. Check each service's pricing page, as they can
 change. The rates the mod uses for its estimate are in `config/advanced-stt.json`
-(`cartesiaCreditsPerSecond`, `assemblyAiDollarsPerHour`).
+(`cartesiaCreditsPerSecond`, `assemblyAiDollarsPerHour`, `voiceFocusDollarsPerHour`).
 
 **About the usage panel:** neither service lets a normal API key read your real balance (Cartesia
 only shows it to admin keys, which this mod never asks for). So the panel shows an **estimate**:
@@ -134,6 +134,8 @@ settings.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | Service | AssemblyAI Universal-3.6 Pro | Which service transcribes your voice |
+| Mode (AssemblyAI) | Balanced | Fastest shows words sooner but a short pause can end your sentence; Most accurate waits a little longer. Same price |
+| Voice Focus (AssemblyAI) | Off | Removes the noise around your voice: Headset, or Distant mic for a laptop or desk microphone. +$0.10 per hour |
 | Talk key | Hold | Hold to talk, or press on/off |
 | Mic indicator | Sound + HUD | Beep and/or on-screen label when the microphone turns on and off |
 | Mic turns off after | 2 min | Safety limit for one dictation (15 s to 10 min) |

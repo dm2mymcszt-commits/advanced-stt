@@ -4,6 +4,7 @@ import com.advancedstt.Provider;
 import com.advancedstt.stt.SessionUsage;
 import com.advancedstt.stt.SttError;
 import com.advancedstt.stt.SttListener;
+import com.advancedstt.stt.SttOptions;
 import com.advancedstt.stt.SttSession;
 import com.advancedstt.stt.SttSessions;
 import net.minecraft.client.Minecraft;
@@ -35,7 +36,8 @@ public final class KeyTester {
 		return message;
 	}
 
-	public void test(Provider provider, String apiKey) {
+	/** Tests the key with the same AssemblyAI settings dictation uses, so a refused setting shows up here too. */
+	public void test(Provider provider, String apiKey, SttOptions options) {
 		cancel();
 		long thisRun = ++run;
 		opened = false;
@@ -83,7 +85,8 @@ public final class KeyTester {
 			}
 		};
 		try {
-			session = SttSessions.open(provider, apiKey, List.of(), listener);
+			session = SttSessions.open(provider, apiKey,
+					new SttOptions(List.of(), options.mode(), options.voiceFocus()), listener);
 			if (opened) {
 				session.finish();
 			}

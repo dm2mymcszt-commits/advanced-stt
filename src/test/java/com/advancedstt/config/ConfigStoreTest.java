@@ -27,6 +27,9 @@ class ConfigStoreTest {
 		assertEquals(120, config.maxSessionSeconds);
 		assertEquals(3.0, config.cartesiaCreditsPerSecond);
 		assertEquals(0.45, config.assemblyAiDollarsPerHour);
+		assertEquals(com.advancedstt.stt.SttOptions.Mode.BALANCED, config.assemblyAiMode);
+		assertEquals(com.advancedstt.stt.SttOptions.VoiceFocus.OFF, config.voiceFocus, "Voice Focus costs extra");
+		assertEquals(0.45, config.assemblyAiRate(), 1e-9);
 	}
 
 	@Test
@@ -37,6 +40,8 @@ class ConfigStoreTest {
 		config.provider = Provider.CARTESIA;
 		config.sendMode = SttConfig.SendMode.AUTO;
 		config.keyterms = new java.util.ArrayList<>(List.of("Steve", "Alex"));
+		config.assemblyAiMode = com.advancedstt.stt.SttOptions.Mode.MAX_ACCURACY;
+		config.voiceFocus = com.advancedstt.stt.SttOptions.VoiceFocus.FAR_FIELD;
 		store.save();
 		String json = Files.readString(file);
 		assertFalse(json.toLowerCase(java.util.Locale.ROOT).contains("apikey"), "keys never go in the settings file");
@@ -44,6 +49,11 @@ class ConfigStoreTest {
 		assertEquals(Provider.CARTESIA, again.provider);
 		assertEquals(SttConfig.SendMode.AUTO, again.sendMode);
 		assertEquals(List.of("Steve", "Alex"), again.keyterms);
+		assertEquals(com.advancedstt.stt.SttOptions.Mode.MAX_ACCURACY, again.assemblyAiMode);
+		assertEquals(com.advancedstt.stt.SttOptions.VoiceFocus.FAR_FIELD, again.voiceFocus);
+		assertEquals(new com.advancedstt.stt.SttOptions(List.of("Steve", "Alex"),
+				com.advancedstt.stt.SttOptions.Mode.MAX_ACCURACY, com.advancedstt.stt.SttOptions.VoiceFocus.FAR_FIELD),
+				again.sttOptions());
 	}
 
 	@Test
@@ -51,7 +61,8 @@ class ConfigStoreTest {
 		Path file = dir.resolve("advanced-stt.json");
 		Files.writeString(file, """
 				{"provider": "nonsense", "autoSendSilenceSeconds": 99, "maxSessionSeconds": 1,
-				 "cartesiaCreditsPerSecond": -1, "keyterms": null, "microphone": null}
+				 "cartesiaCreditsPerSecond": -1, "keyterms": null, "microphone": null,
+				 "assemblyAiMode": "turbo", "voiceFocus": null, "voiceFocusDollarsPerHour": -3}
 				""");
 		SttConfig config = new ConfigStore(file).load();
 		assertEquals(Provider.ASSEMBLYAI, config.provider);
@@ -60,6 +71,9 @@ class ConfigStoreTest {
 		assertEquals(SttConfig.DEFAULT_CARTESIA_CREDITS_PER_SECOND, config.cartesiaCreditsPerSecond);
 		assertEquals(List.of(), config.keyterms);
 		assertEquals("", config.microphone);
+		assertEquals(com.advancedstt.stt.SttOptions.Mode.BALANCED, config.assemblyAiMode);
+		assertEquals(com.advancedstt.stt.SttOptions.VoiceFocus.OFF, config.voiceFocus);
+		assertEquals(SttConfig.DEFAULT_VOICE_FOCUS_DOLLARS_PER_HOUR, config.voiceFocusDollarsPerHour);
 	}
 
 	@Test

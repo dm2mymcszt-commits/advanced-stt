@@ -10,6 +10,7 @@ import com.advancedstt.secure.CredentialStore;
 import com.advancedstt.stt.SessionUsage;
 import com.advancedstt.stt.SttError;
 import com.advancedstt.stt.SttListener;
+import com.advancedstt.stt.SttOptions;
 import com.advancedstt.stt.SttSession;
 import com.advancedstt.stt.SttSessions;
 import com.advancedstt.text.AutoSendPolicy;
@@ -104,14 +105,14 @@ public final class DictationController {
 			}
 
 			@Override
-			public SttSession connect(Provider provider, String apiKey, List<String> keyterms, SttListener listener) {
-				return SttSessions.open(provider, apiKey, keyterms, listener);
+			public SttSession connect(Provider provider, String apiKey, SttOptions options, SttListener listener) {
+				return SttSessions.open(provider, apiKey, options, listener);
 			}
 		};
 
 		Microphone microphone(String deviceName, Consumer<byte[]> sink);
 
-		SttSession connect(Provider provider, String apiKey, List<String> keyterms, SttListener listener);
+		SttSession connect(Provider provider, String apiKey, SttOptions options, SttListener listener);
 	}
 
 	/** One press of the talk key: microphone, then (after a short delay in hold mode) a connection. */
@@ -426,7 +427,7 @@ public final class DictationController {
 	private void connect(Minecraft mc, Live live, SttConfig config, long now) {
 		String key = live.takeKey();
 		try {
-			live.session = devices.connect(live.provider, key, config.keyterms, new Listener(live.id, live.provider, key));
+			live.session = devices.connect(live.provider, key, config.sttOptions(), new Listener(live.id, live.provider, key));
 		} catch (RuntimeException e) {
 			current = null;
 			live.pipe.discard();

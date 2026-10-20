@@ -6,6 +6,7 @@ import com.advancedstt.audio.Microphone;
 import com.advancedstt.stt.SessionUsage;
 import com.advancedstt.stt.SttError;
 import com.advancedstt.stt.SttListener;
+import com.advancedstt.stt.SttOptions;
 import com.advancedstt.stt.SttSession;
 
 import java.util.List;
@@ -31,8 +32,8 @@ final class FakeDevices implements DictationController.Devices {
 	}
 
 	@Override
-	public SttSession connect(Provider provider, String apiKey, List<String> keyterms, SttListener listener) {
-		FakeSession session = new FakeSession(provider, apiKey, keyterms, listener);
+	public SttSession connect(Provider provider, String apiKey, SttOptions options, SttListener listener) {
+		FakeSession session = new FakeSession(provider, apiKey, options, listener);
 		sessions.add(session);
 		return session;
 	}
@@ -78,6 +79,7 @@ final class FakeDevices implements DictationController.Devices {
 		final Provider provider;
 		final String apiKey;
 		final List<String> keyterms;
+		final SttOptions options;
 		private final SttListener listener;
 		private final AtomicBoolean closed = new AtomicBoolean();
 		final AtomicInteger audioChunks = new AtomicInteger();
@@ -88,10 +90,11 @@ final class FakeDevices implements DictationController.Devices {
 		volatile String lastWords;
 		volatile int lastTurn;
 
-		FakeSession(Provider provider, String apiKey, List<String> keyterms, SttListener listener) {
+		FakeSession(Provider provider, String apiKey, SttOptions options, SttListener listener) {
 			this.provider = provider;
 			this.apiKey = apiKey;
-			this.keyterms = keyterms;
+			this.options = options;
+			this.keyterms = options.keyterms();
 			this.listener = listener;
 		}
 

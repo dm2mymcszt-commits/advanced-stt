@@ -9,6 +9,7 @@ import com.advancedstt.client.Messages;
 import com.advancedstt.config.SttConfig;
 import com.advancedstt.secure.ApiKeys;
 import com.advancedstt.secure.CredentialStore;
+import com.advancedstt.stt.SttOptions;
 import com.advancedstt.text.Keyterms;
 import com.advancedstt.usage.UsageFormat;
 import com.advancedstt.usage.UsageTracker;
@@ -55,6 +56,8 @@ public final class SettingsScreen extends OptionsSubScreen {
 	private InfoLine usageLine;
 	private InfoLine usageNote;
 	private InfoLine languageInfo;
+	private CycleButton<SttOptions.Mode> modeButton;
+	private CycleButton<SttOptions.VoiceFocus> voiceFocusButton;
 	private EditBox balanceBox;
 	private Button clearBalanceButton;
 	private boolean keytermsEdited;
@@ -71,6 +74,7 @@ public final class SettingsScreen extends OptionsSubScreen {
 	@Override
 	protected void addOptions() {
 		addServiceRows();
+		addAssemblyAiRows();
 		addMicrophoneRows();
 		addSendingRows();
 		addWordRows();
@@ -117,6 +121,30 @@ public final class SettingsScreen extends OptionsSubScreen {
 
 		actionStatus = new InfoLine(Component.empty(), MUTED);
 		list.addBig(actionStatus);
+	}
+
+	/** AssemblyAI's own settings. Greyed out while Cartesia is the chosen service. */
+	private void addAssemblyAiRows() {
+		list.addHeader(Component.translatable("advanced_stt.settings.section.assemblyai"));
+		modeButton = CycleButton
+				.builder((SttOptions.Mode v) -> Component.translatable("advanced_stt.settings.mode." + lower(v)),
+						config.assemblyAiMode)
+				.withValues(SttOptions.Mode.values())
+				.create(Component.translatable("advanced_stt.settings.mode"), (button, value) -> {
+					config.assemblyAiMode = value;
+					saveConfig();
+					refresh();
+				});
+		voiceFocusButton = CycleButton
+				.builder((SttOptions.VoiceFocus v) -> Component.translatable(
+						"advanced_stt.settings.voice_focus." + lower(v)), config.voiceFocus)
+				.withValues(SttOptions.VoiceFocus.values())
+				.create(Component.translatable("advanced_stt.settings.voice_focus"), (button, value) -> {
+					config.voiceFocus = value;
+					saveConfig();
+					refresh();
+				});
+		list.addSmall(modeButton, voiceFocusButton);
 	}
 
 	private void addMicrophoneRows() {
@@ -278,7 +306,7 @@ public final class SettingsScreen extends OptionsSubScreen {
 			return;
 		}
 		setAction(Component.empty(), MUTED);
-		tester.test(config.provider, key.get());
+		tester.test(config.provider, key.get(), config.sttOptions());
 	}
 
 	private void setBalance() {
@@ -371,12 +399,24 @@ public final class SettingsScreen extends OptionsSubScreen {
 				? Component.translatable("advanced_stt.settings.usage.note.cartesia",
 						local(UsageFormat.plain(config.cartesiaCreditsPerSecond)))
 				: Component.translatable("advanced_stt.settings.usage.note.assemblyai",
-						local(UsageFormat.plain(config.assemblyAiDollarsPerHour))), MUTED);
+						local(UsageFormat.plain(config.assemblyAiRate()))), MUTED);
 		usageNote.setTooltip(Tooltip.create(Component.translatable("advanced_stt.settings.usage.note.tooltip")));
 
 		// Ink-2 was tested by the owner: fine in English, weak in French, and mixed sentences fail.
 		languageInfo.set(Component.translatable("advanced_stt.settings.language." + provider.id()),
 				provider == Provider.CARTESIA ? WARN : MUTED);
+
+		boolean assemblyAi = provider == Provider.ASSEMBLYAI;
+		Component onlyAssemblyAi = Component.translatable("advanced_stt.settings.assemblyai_only");
+		modeButton.active = assemblyAi;
+		modeButton.setTooltip(Tooltip.create(assemblyAi
+				? Component.translatable("advanced_stt.settings.mode." + lower(config.assemblyAiMode) + ".tooltip")
+				: onlyAssemblyAi));
+		voiceFocusButton.active = assemblyAi;
+		voiceFocusButton.setTooltip(Tooltip.create(assemblyAi
+				? Component.translatable("advanced_stt.settings.voice_focus." + lower(config.voiceFocus) + ".tooltip",
+						local(UsageFormat.plain(config.voiceFocusDollarsPerHour)))
+				: onlyAssemblyAi));
 	}
 
 	private void setAction(Component message, int color) {

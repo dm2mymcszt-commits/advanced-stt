@@ -1,6 +1,7 @@
 package com.advancedstt.config;
 
 import com.advancedstt.Provider;
+import com.advancedstt.stt.SttOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,8 @@ public final class SttConfig {
 	public static final double DEFAULT_CARTESIA_CREDITS_PER_SECOND = 3.0;
 	/** AssemblyAI's list price for Universal-3.6 Pro streaming: $0.45 per hour. */
 	public static final double DEFAULT_ASSEMBLYAI_DOLLARS_PER_HOUR = 0.45;
+	/** AssemblyAI's list price for the Voice Focus add-on on Universal-3.6 Pro streaming: +$0.10 per hour. */
+	public static final double DEFAULT_VOICE_FOCUS_DOLLARS_PER_HOUR = 0.10;
 
 	/** AssemblyAI by default: it handles French and English, even mixed in one sentence. */
 	public Provider provider = Provider.ASSEMBLYAI;
@@ -45,9 +48,24 @@ public final class SttConfig {
 	public int maxSessionSeconds = 120;
 	/** Words to listen for: names and game words the service should spell right. */
 	public List<String> keyterms = new ArrayList<>();
+	/** AssemblyAI only: speed/accuracy preset. Balanced is AssemblyAI's own default. */
+	public SttOptions.Mode assemblyAiMode = SttOptions.Mode.BALANCED;
+	/** AssemblyAI only: background-noise removal. Off by default, as it costs extra. */
+	public SttOptions.VoiceFocus voiceFocus = SttOptions.VoiceFocus.OFF;
 	/** Prices used for the estimate; editable in the file if a service changes them. */
 	public double cartesiaCreditsPerSecond = DEFAULT_CARTESIA_CREDITS_PER_SECOND;
 	public double assemblyAiDollarsPerHour = DEFAULT_ASSEMBLYAI_DOLLARS_PER_HOUR;
+	public double voiceFocusDollarsPerHour = DEFAULT_VOICE_FOCUS_DOLLARS_PER_HOUR;
+
+	/** What a new session should be told: the words to listen for and AssemblyAI's settings. */
+	public SttOptions sttOptions() {
+		return new SttOptions(keyterms, assemblyAiMode, voiceFocus);
+	}
+
+	/** AssemblyAI's price per hour with the current settings: the base rate, plus Voice Focus when it's on. */
+	public double assemblyAiRate() {
+		return assemblyAiDollarsPerHour + (voiceFocus == SttOptions.VoiceFocus.OFF ? 0 : voiceFocusDollarsPerHour);
+	}
 
 	/** Puts every value back in range after loading a hand-edited or older file. */
 	public SttConfig sanitize() {
@@ -66,6 +84,12 @@ public final class SttConfig {
 		if (microphone == null) {
 			microphone = "";
 		}
+		if (assemblyAiMode == null) {
+			assemblyAiMode = SttOptions.Mode.BALANCED;
+		}
+		if (voiceFocus == null) {
+			voiceFocus = SttOptions.VoiceFocus.OFF;
+		}
 		if (keyterms == null) {
 			keyterms = new ArrayList<>();
 		}
@@ -80,6 +104,9 @@ public final class SttConfig {
 		}
 		if (!(assemblyAiDollarsPerHour > 0) || !Double.isFinite(assemblyAiDollarsPerHour)) {
 			assemblyAiDollarsPerHour = DEFAULT_ASSEMBLYAI_DOLLARS_PER_HOUR;
+		}
+		if (!(voiceFocusDollarsPerHour >= 0) || !Double.isFinite(voiceFocusDollarsPerHour)) {
+			voiceFocusDollarsPerHour = DEFAULT_VOICE_FOCUS_DOLLARS_PER_HOUR;
 		}
 		return this;
 	}
