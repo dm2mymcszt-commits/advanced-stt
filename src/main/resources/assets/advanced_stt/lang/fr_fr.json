@@ -6,6 +6,8 @@
 	"advanced_stt.hud.connecting": "Connexion…",
 	"advanced_stt.hud.listening": "Écoute %s",
 	"advanced_stt.hud.finishing": "Fin…",
+	"advanced_stt.hud.send_in": "Envoi dans %s s · Échap pour annuler",
+	"advanced_stt.hud.esc_cancels": "Échap pour annuler",
 
 	"advanced_stt.notice.no_key": "Pas encore de clé API %s. Tapez /astt pour en ajouter une.",
 	"advanced_stt.notice.start_failed": "Connexion à %s impossible : %s",
@@ -16,6 +18,7 @@
 	"advanced_stt.notice.not_sent.too_long": "Trop long pour un message (%s sur %s caractères). Raccourcissez-le, puis appuyez sur Entrée.",
 	"advanced_stt.notice.not_sent.repeat": "Identique à votre dernier message, donc pas renvoyé. Appuyez sur Entrée pour l'envoyer.",
 	"advanced_stt.notice.not_sent.restricted": "Les messages ne peuvent pas être envoyés pour l'instant. Voir la zone de chat.",
+	"advanced_stt.notice.cancelled": "Message annulé. Rien n'a été envoyé.",
 
 	"advanced_stt.error.invalid_key": "%s a refusé la clé API. Vérifiez-la avec /astt.",
 	"advanced_stt.error.no_credits": "%s indique qu'il ne reste plus de crédits sur votre compte.",
@@ -88,9 +91,9 @@
 	"advanced_stt.settings.send.manual": "Avec Entrée",
 	"advanced_stt.settings.send.auto": "Automatique",
 	"advanced_stt.settings.send.manual.info": "Vos mots vont dans le chat. Appuyez sur Entrée pour envoyer.",
-	"advanced_stt.settings.send.auto.info": "Envoyé quand vous arrêtez de parler. Jamais les commandes.",
+	"advanced_stt.settings.send.auto.info": "Après un silence. Échap annule. Jamais les commandes.",
 	"advanced_stt.settings.silence": "Silence : %s s",
-	"advanced_stt.settings.silence.tooltip": "Temps d'attente après la fin de votre phrase avant l'envoi du message.",
+	"advanced_stt.settings.silence.tooltip": "Temps d'attente après la fin de votre phrase, ou après avoir lâché la touche, avant l'envoi du message. D'ici là, Échap l'annule, et ouvrir le chat permet de le vérifier puis de l'envoyer avec Entrée.",
 
 	"advanced_stt.settings.section.words": "Mots à reconnaître",
 	"advanced_stt.settings.words": "Mots à reconnaître",

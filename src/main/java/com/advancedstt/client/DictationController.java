@@ -65,6 +65,8 @@ public final class DictationController {
 	static final long CHAT_ARM_MS = 300;
 	private static final long NOTICE_MS = 6_000;
 	private static final long SAME_CHAT_NOTICE_GAP_MS = 4_000;
+	private static final long NOT_WAITING = -1;
+	private static final long WAITING_FOR_WORDS = Long.MAX_VALUE;
 
 	public enum Phase {
 		IDLE, CONNECTING, LISTENING, FINISHING
@@ -170,9 +172,17 @@ public final class DictationController {
 	private boolean chatTalkKeyReleased;
 	private String lastText = "";
 	private long lastChangeMs;
+	/** When the microphone last went fully off (the last words of every connection arrived). */
+	private long micOffAtMs;
 	private boolean endpointRequested;
-	/** Auto-send handed the text to the player; nothing is sent until they deal with it. */
+	/**
+	 * The chat box holds text the player sends themselves (auto-send handed it to them, or they opened
+	 * the chat to check it). Nothing is sent automatically until that chat box closes.
+	 */
 	private boolean autoSendPaused;
+	/** When the waiting message will be sent, or {@link #NOT_WAITING} / {@link #WAITING_FOR_WORDS}. */
+	private long sendDueAtMs = NOT_WAITING;
+	private long sendDelayMs;
 	private volatile boolean openSettingsSoon;
 
 	private Component notice;
@@ -218,6 +228,22 @@ public final class DictationController {
 		return bridge.isBound();
 	}
 
+	/**
+	 * In auto-send mode, while a message waits to be sent: the milliseconds left (0: any moment now),
+	 * or {@link Long#MAX_VALUE} while its last words are still on their way. -1 when no message waits.
+	 */
+	public long autoSendInMs() {
+		if (sendDueAtMs == NOT_WAITING || sendDueAtMs == WAITING_FOR_WORDS) {
+			return sendDueAtMs;
+		}
+		return Math.max(0, sendDueAtMs - Util.getMillis());
+	}
+
+	/** The wait the player chose before a message is sent, in milliseconds. */
+	public long autoSendDelayMs() {
+		return sendDelayMs;
+	}
+
 	/** A short message for the HUD, or null when there is none to show. */
 	public Component notice() {
 		return Util.getMillis() - noticeAtMs < NOTICE_MS ? notice : null;
@@ -229,6 +255,35 @@ public final class DictationController {
 
 	public void openSettingsSoon() {
 		openSettingsSoon = true;
+	}
+
+	/**
+	 * Esc was pressed in game, just before the pause menu opens. In auto-send mode, while words are
+	 * being dictated or wait to be sent, Esc drops them instead: the microphone turns off and nothing
+	 * is sent. Returns true when it did, so the pause menu stays closed. Game thread only.
+	 */
+	public boolean cancelOnEscape(Minecraft mc) {
+		try {
+			SttConfig config = configStore.get();
+			if (config.sendMode != SttConfig.SendMode.AUTO || mc.player == null || mc.gui.screen() != null
+					|| bridge.isBound()) {
+				return false;
+			}
+			boolean micWasOn = current != null && current.session != null;
+			if (!micWasOn && closing.isEmpty() && transcript.isEmpty()) {
+				return false; // nothing to cancel: open the pause menu as usual
+			}
+			stopEverything(true);
+			if (micWasOn) {
+				beep(mc, config, false);
+			}
+			AdvancedStt.LOG.info("Dictation cancelled with Esc");
+			notify(mc, Component.translatable("advanced_stt.notice.cancelled"), false);
+			return true;
+		} catch (RuntimeException e) {
+			AdvancedStt.LOG.error("Could not cancel the dictation", e);
+			return false;
+		}
 	}
 
 	/** For the in-game tests: a fake microphone and service. Game thread only. */
@@ -252,8 +307,15 @@ public final class DictationController {
 	private void tickUnsafe(Minecraft mc) {
 		long now = Util.getMillis();
 		// Look at the chat box before new words arrive, so words the player never saw are not lost.
-		if (bridge.observe(mc, transcript) != ChatBridge.Result.NONE) {
-			autoSendPaused = false; // the player took over the text
+		switch (bridge.observe(mc, transcript)) {
+			case CLOSED -> autoSendPaused = false; // sent or cancelled: the player dealt with it
+			case OPENED -> {
+				if (!transcript.isEmpty() && configStore.get().sendMode == SttConfig.SendMode.AUTO) {
+					autoSendPaused = true; // opened to check the words: the player sends them with Enter
+				}
+			}
+			default -> {
+			}
 		}
 		drainEvents(mc);
 
@@ -291,6 +353,7 @@ public final class DictationController {
 		if (config.sendMode == SttConfig.SendMode.AUTO) {
 			autoSendTick(mc, config, now);
 		} else {
+			sendDueAtMs = NOT_WAITING;
 			handOverTick(mc);
 		}
 	}
@@ -476,6 +539,9 @@ public final class DictationController {
 		current = null;
 		live.pipe.discard();
 		micWorker.execute(live.mic::stop);
+		if (closing.isEmpty()) {
+			micOffAtMs = Util.getMillis(); // a waiting message gets its full wait again
+		}
 	}
 
 	/** Stops everything at once. With {@code discardText}, dictated words not handed over are dropped. */
@@ -503,6 +569,7 @@ public final class DictationController {
 			bridge.release();
 			lastText = "";
 			autoSendPaused = false;
+			sendDueAtMs = NOT_WAITING;
 		}
 	}
 
@@ -583,6 +650,9 @@ public final class DictationController {
 		if (!discarded.remove(event.session())) {
 			transcript.finishOpenTurns(ChatText.firstTurn(event.session()), ChatText.endTurn(event.session()));
 		}
+		if (current == null && closing.isEmpty()) {
+			micOffAtMs = Util.getMillis(); // the last words are in: a waiting message gets its full wait from now
+		}
 		SessionUsage used = event.usage();
 		double cost = usage.record(used, configStore.get());
 		try {
@@ -608,22 +678,35 @@ public final class DictationController {
 		openChat(mc);
 	}
 
+	/**
+	 * Auto-send mode: the message goes out once the player has been quiet for the wait they chose.
+	 * While the microphone is on, the wait starts at the last new word. Once it is off, it starts when
+	 * the last words arrive, so the player always has the whole wait to read the text and press Esc.
+	 */
 	private void autoSendTick(Minecraft mc, SttConfig config, long now) {
-		if (autoSendPaused || transcript.isEmpty() || !closing.isEmpty()) {
-			return; // nothing new, or the last words are still on their way
+		sendDueAtMs = NOT_WAITING;
+		if (autoSendPaused || transcript.isEmpty()) {
+			return; // nothing new, or the player sends it themselves
 		}
+		long delayMs = Math.round(config.autoSendSilenceSeconds * 1000);
+		sendDelayMs = delayMs;
 		boolean live = current != null && current.session != null;
+		if (!closing.isEmpty() || (current != null && !live)) {
+			sendDueAtMs = WAITING_FOR_WORDS; // the last words are on their way, or the talk key was pressed again
+			return;
+		}
+		// Turning the microphone back on during the wait (to add words) starts it again.
+		long quietSince = Math.max(lastChangeMs, live ? current.startedAtMs : micOffAtMs);
 		String message = bridge.isBound() ? bridge.value() : transcript.text();
-		long silenceMs = live ? Math.round(config.autoSendSilenceSeconds * 1000) : 0;
 		AutoSendPolicy.Decision decision = autoSend.decide(message, live && transcript.hasOpenTurn(),
-				lastChangeMs, silenceMs, now);
+				quietSince, delayMs, now);
 		if (decision == AutoSendPolicy.Decision.SEND && !mc.computeChatAbilities().canSendMessages()) {
 			decision = AutoSendPolicy.Decision.HAND_TO_PLAYER; // chat is restricted: let the chat screen explain
 		}
 		switch (decision) {
-			case WAIT -> {
-			}
+			case WAIT -> sendDueAtMs = quietSince + delayMs;
 			case REQUEST_ENDPOINT -> {
+				sendDueAtMs = WAITING_FOR_WORDS;
 				if (!endpointRequested && live) {
 					endpointRequested = true;
 					current.session.requestEndpoint();

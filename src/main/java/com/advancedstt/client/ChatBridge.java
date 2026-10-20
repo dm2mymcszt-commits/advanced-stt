@@ -19,6 +19,8 @@ import net.minecraft.util.StringUtil;
 final class ChatBridge {
 	enum Result {
 		NONE,
+		/** A chat box was opened: the words not handed over yet go in it. */
+		OPENED,
 		/** The player changed the box. */
 		USER_EDIT,
 		/** The chat box was closed (sent, cancelled, or replaced by another screen). */
@@ -58,7 +60,7 @@ final class ChatBridge {
 			base = input.getValue();
 			lastWritten = base;
 			lastDesired = null;
-			return result;
+			return result == Result.CLOSED ? result : Result.OPENED;
 		}
 		EditBox input = input(bound);
 		if (input == null) {

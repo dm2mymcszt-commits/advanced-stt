@@ -4,7 +4,8 @@
 	"package": "com.advancedstt.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ChatScreenAccessor"
+		"ChatScreenAccessor",
+		"KeyboardHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

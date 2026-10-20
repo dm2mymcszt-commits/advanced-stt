@@ -69,6 +69,9 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 			altUsedToTypeASymbol(context);
 			pressOnPressOff(context);
 			autoSendAfterSilence(context);
+			autoSendWaitsAfterLettingGo(context);
+			escapeCancelsTheMessage(context);
+			openingTheChatStopsAutoSend(context);
 			autoSendNeverSendsCommands(context);
 			serviceRefusesTheKey(context);
 			microphoneProblem(context);
@@ -169,6 +172,13 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		context.takeScreenshot("settings-french");
 		scrollDown(context, 4);
 		context.takeScreenshot("settings-french-assemblyai-greyed");
+		context.setScreen(() -> null);
+		setConfig(context, config -> config.sendMode = SttConfig.SendMode.AUTO);
+		context.setScreen(() -> new SettingsScreen(null));
+		context.waitTicks(2);
+		scrollDown(context, 24);
+		context.takeScreenshot("settings-french-auto-send");
+		setConfig(context, config -> config.sendMode = SttConfig.SendMode.MANUAL);
 		scrollToBottom(context);
 		context.takeScreenshot("settings-french-bottom");
 		context.setScreen(() -> null);
@@ -341,6 +351,101 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 		check(SERVER_CHAT.stream().filter("On my way."::equals).count() == 1, "the message is sent once");
 	}
 
+	private void autoSendWaitsAfterLettingGo(ClientGameTestContext context) {
+		setConfig(context, config -> config.autoSendSilenceSeconds = 1.5);
+		FakeDevices.FakeSession session = startTalking(context);
+		session.say(0, "see you");
+		session.lastWords(0, "See you soon.");
+		context.getInput().releaseKey(TALK_KEY);
+		waitUntil(context, "the countdown starts once the last words are in",
+				mc -> countdownRunning() && dictation().pendingText().equals("See you soon."));
+		check(context.computeOnClient(mc -> dictation().autoSendInMs()) > 1_000,
+				"after letting go, the message waits the whole wait");
+		waitMillis(context, 500);
+		check(!SERVER_CHAT.contains("See you soon."), "it isn't sent right away");
+		long left = context.computeOnClient(mc -> dictation().autoSendInMs());
+		check(left > 0 && left < 1_200, "the countdown runs (" + left + " ms left)");
+		context.takeScreenshot("auto-send-countdown");
+		waitUntil(context, "the message is sent at the end of the wait", mc -> SERVER_CHAT.contains("See you soon."));
+		check(context.computeOnClient(mc -> dictation().autoSendInMs()) == -1, "nothing waits after sending");
+	}
+
+	private void escapeCancelsTheMessage(ClientGameTestContext context) {
+		setConfig(context, config -> config.autoSendSilenceSeconds = 3.0);
+
+		// While the message waits after letting go.
+		FakeDevices.FakeSession session = startTalking(context);
+		session.lastWords(0, "Wrong words here.");
+		context.getInput().releaseKey(TALK_KEY);
+		waitUntil(context, "the message waits",
+				mc -> countdownRunning() && dictation().pendingText().equals("Wrong words here."));
+		context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+		context.waitTicks(2);
+		check(context.computeOnClient(mc -> mc.gui.screen() == null), "Esc doesn't open the pause menu");
+		check(context.computeOnClient(mc -> dictation().pendingText().isEmpty() && dictation().autoSendInMs() == -1),
+				"Esc drops the waiting words");
+		check(noticeContainsKey(context, "advanced_stt.notice.cancelled"), "the player is told");
+		context.takeScreenshot("auto-send-cancelled");
+		waitMillis(context, 3_500);
+		check(!SERVER_CHAT.contains("Wrong words here."), "the cancelled message is never sent");
+
+		// While still talking: the microphone turns off too.
+		FakeDevices.FakeSession talking = startTalking(context);
+		talking.say(0, "never mind");
+		waitUntil(context, "the words show", mc -> dictation().pendingText().equals("never mind"));
+		context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+		waitUntil(context, "Esc closes the connection", mc -> talking.aborted);
+		waitUntil(context, "the microphone is off", mc -> allMicrophonesOff());
+		check(context.computeOnClient(mc -> mc.gui.screen() == null && dictation().pendingText().isEmpty()),
+				"no pause menu and no words left");
+		context.waitTicks(5);
+		check(devices.sessions.size() == devices.sessions.indexOf(talking) + 1,
+				"still holding the talk key after Esc doesn't reconnect");
+		context.getInput().releaseKey(TALK_KEY);
+		context.waitTicks(2);
+		check(!SERVER_CHAT.contains("never mind"), "nothing was sent");
+
+		// With nothing waiting, Esc opens the pause menu as usual.
+		context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+		context.waitForScreen(PauseScreen.class);
+		context.setScreen(() -> null);
+
+		// The chat box was open before talking: the countdown shows above it, and Esc closes it unsent.
+		context.getInput().pressKey(options -> options.keyChat);
+		context.waitForScreen(ChatScreen.class);
+		FakeDevices.FakeSession inChat = startTalking(context);
+		inChat.lastWords(0, "Typo in chat.");
+		context.getInput().releaseKey(TALK_KEY);
+		waitUntil(context, "the words wait in the chat box",
+				mc -> "Typo in chat.".equals(chatValue(mc)) && countdownRunning());
+		context.takeScreenshot("auto-send-countdown-in-chat");
+		context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+		context.waitFor(mc -> mc.gui.screen() == null);
+		context.runOnClient(mc -> mc.gui.hud.getChat().discardDraft()); // in case drafts are kept
+		waitMillis(context, 3_500);
+		check(!SERVER_CHAT.contains("Typo in chat."), "closing the chat box cancels the message");
+	}
+
+	private void openingTheChatStopsAutoSend(ClientGameTestContext context) {
+		FakeDevices.FakeSession session = startTalking(context);
+		session.lastWords(0, "Let me check this.");
+		context.getInput().releaseKey(TALK_KEY);
+		waitUntil(context, "the message waits",
+				mc -> countdownRunning() && dictation().pendingText().equals("Let me check this."));
+		context.getInput().pressKey(options -> options.keyChat);
+		context.waitForScreen(ChatScreen.class);
+		waitUntil(context, "the words go in the chat box", mc -> "Let me check this.".equals(chatValue(mc)));
+		check(context.computeOnClient(mc -> dictation().autoSendInMs()) == -1, "opening the chat stops the countdown");
+		waitMillis(context, 3_500);
+		check(!SERVER_CHAT.contains("Let me check this."), "nothing is sent while the player checks it");
+		check("Let me check this.".equals(context.computeOnClient(AdvancedSttGameTest::chatValue)),
+				"the words wait in the chat box");
+		context.getInput().pressKey(GLFW.GLFW_KEY_ENTER);
+		waitUntil(context, "Enter sends it", mc -> SERVER_CHAT.contains("Let me check this."));
+		context.waitTicks(2);
+		setConfig(context, config -> config.autoSendSilenceSeconds = 0.5);
+	}
+
 	private void autoSendNeverSendsCommands(ClientGameTestContext context) {
 		FakeDevices.FakeSession session = startTalking(context);
 		session.lastWords(0, "/time set night");
@@ -444,6 +549,12 @@ public final class AdvancedSttGameTest implements FabricClientGameTest {
 
 	private static DictationController dictation() {
 		return AdvancedStt.get().dictation();
+	}
+
+	/** A message waits to be sent automatically, and its countdown has started. */
+	private static boolean countdownRunning() {
+		long left = dictation().autoSendInMs();
+		return left > 0 && left != Long.MAX_VALUE;
 	}
 
 	private static String chatValue(Minecraft mc) {
