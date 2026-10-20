@@ -1,0 +1,39 @@
+name: Release
+
+# Run by hand from the Actions tab: builds the mod from main and publishes it as a GitHub release,
+# tagged with the version in gradle.properties (for example v0.1.0+26.2).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test
+        run: ./gradlew build --no-daemon
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mod=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
+          mc=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)
+          tag="v${mod}+${mc}"
+          jar="build/libs/advanced-stt-${mod}+${mc}.jar"
+          test -f "$jar"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists. Raise mod_version in gradle.properties first."
+            exit 1
+          fi
+          gh release create "$tag" "$jar" \
+            --target "$GITHUB_SHA" \
+            --title "Advanced STT ${mod} for Minecraft ${mc}" \
+            --notes "Voice dictation for Minecraft ${mc} chat (Fabric). Needs Fabric Loader 0.19.5 or newer and Fabric API. Install guide, API keys and settings: see the [README](https://github.com/${GITHUB_REPOSITORY}#readme)."
